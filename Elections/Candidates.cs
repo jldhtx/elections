@@ -6,6 +6,7 @@ public static class Candidates
 {
     private static readonly IReadOnlyList<ICandidate> _official = GetNewYorkCityDemocraticMayoralPrimary().ToList();
     private static readonly IReadOnlyList<ICandidate> _writeIns = GetSupremeCourtJustices().ToList();
+    public static readonly ICandidate NoWinner = new Candidate(0, "No Winner");
     private const int _writeInFactor = 1337;
 
     public static IReadOnlyList<ICandidate> Official => _official;

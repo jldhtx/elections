@@ -35,8 +35,8 @@ static void RunElection<TElection, TBallot>(IReadOnlyList<TBallot> ballots)
     try
     {
         var election = new TElection();
-        var winner = election.Run(ballots, Candidates.Official);
-        Console.WriteLine(FormatMessage($"Winner is {winner?.Name}"));
+        var results = election.Run(ballots, Candidates.Official);
+        Console.WriteLine(FormatMessage($"Winner is {results?.Winner.Name}"));
     }
     catch (Exception ex)
     {
