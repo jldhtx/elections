@@ -1,11 +1,38 @@
-﻿using Elections.Interfaces;
+﻿using System.Collections.ObjectModel;
+using Elections.Interfaces;
 
 namespace Elections.Elections;
 
-public class RankedChoiceElection : IElection<IRankedBallot>
+public abstract class Election<TBallot> : IElection<TBallot> where TBallot : IBallot
 {
-    public IElectionResults Run(IReadOnlyList<IRankedBallot> ballots, IReadOnlyList<ICandidate> candidates)
+
+    public abstract IBallotCountingStrategy<TBallot> Strategy { get; protected set; }
+
+    public ICandidate Run(IReadOnlyList<TBallot> ballots, IReadOnlyList<ICandidate> candidates)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(ballots, nameof(ballots));
+        ArgumentNullException.ThrowIfNull(candidates, nameof(candidates));
+
+        if (ballots.Count == 0 || candidates.Count == 0)
+            return Candidates.NoWinner;
+        if (candidates.Count == 1)
+            return candidates.First();
+
+        return Strategy.CountBallots(ballots);
+
+
     }
+
+    public void SetStrategy(IBallotCountingStrategy<TBallot> strategy)
+    {
+        this.Strategy = strategy;
+    }
+}
+public class RankedChoiceElection : Election<IRankedBallot>
+{
+    public override IBallotCountingStrategy<IRankedBallot> Strategy
+    {
+        get => throw new NotImplementedException(); protected set => throw new NotImplementedException();
+    }
+
 }

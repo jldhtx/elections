@@ -5,5 +5,8 @@ namespace Elections.Interfaces;
 public interface IElection<TBallot>
     where TBallot : IBallot
 {
-    IElectionResults Run(IReadOnlyList<TBallot> ballots, IReadOnlyList<ICandidate> candidates);
+
+    void SetStrategy(IBallotCountingStrategy<TBallot> strategy);
+    ICandidate Run(IReadOnlyList<TBallot> ballots, IReadOnlyList<ICandidate> candidates
+             );
 }

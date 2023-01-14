@@ -15,18 +15,19 @@ RunRankedChoiceElection(voters);
 static void RunSimpleElection(IReadOnlyList<IVoter> voters)
 {
     var ballots = SingleVoteBallotFactory.Create(voters, Candidates.Official);
-    RunElection<PluralityElection, ISingleVoteBallot>(ballots);
+    // RunElection<PluralityElection, ISingleVoteBallot>(ballots);
 }
 
 static void RunRankedChoiceElection(IReadOnlyList<IVoter> voters)
 {
     var ballots = RankedBallotFactory.Create(voters, Candidates.Official);
-    RunElection<RankedChoiceElection, IRankedBallot>(ballots);
+    // RunElection<RankedChoiceElection, IRankedBallot>(ballots);
 }
 
-static void RunElection<TElection, TBallot>(IReadOnlyList<TBallot> ballots)
+static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ballots)
     where TElection : IElection<TBallot>, new()
     where TBallot : IBallot
+    where TStrategy : IBallotCountingStrategy<TBallot>, new()
 {
     var stopwatch = Stopwatch.StartNew();
     Console.WriteLine($"========== {typeof(TElection).Name} ==========");
@@ -35,8 +36,9 @@ static void RunElection<TElection, TBallot>(IReadOnlyList<TBallot> ballots)
     try
     {
         var election = new TElection();
-        var results = election.Run(ballots, Candidates.Official);
-        Console.WriteLine(FormatMessage($"Winner is {results?.Winner.Name}"));
+        var winner = election.Run(ballots, Candidates.Official);
+
+        Console.WriteLine(FormatMessage($"Winner is {winner.Name}"));
     }
     catch (Exception ex)
     {

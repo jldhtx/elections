@@ -18,6 +18,8 @@ public static class Voters
         return voters;
     }
 
+
+
     private static IVoter CreateVoter(int id)
     {
         return new Voter(id, $"Voter {id}");
