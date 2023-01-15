@@ -66,37 +66,7 @@ public class RankedChoiceFancyCountingStrategy : IBallotCountingStrategy<IRanked
                         .ToList();
 
     }
-    private int GetCandidateWithLeastVotes(Dictionary<int, int> voteCounter)
-    {
-        var lowest = voteCounter.Keys.First();
 
-        foreach (var candidate in voteCounter.Keys)
-        {
-            if (voteCounter[candidate] < voteCounter[lowest])
-            {
-                lowest = candidate;
-            }
-        }
-        return lowest;
-    }
-    private void DropLowest(Dictionary<int, int> voteCounter,
-    int lowest)
-    {
-        voteCounter.Remove(lowest);
-    }
-
-
-
-
-    private int GetWinner(Dictionary<int, int> counter, int voteCount)
-    {
-        foreach (var candidate in counter.Keys)
-        {
-            double percentageOfVote = counter[candidate] / (double)voteCount;
-            if (percentageOfVote >= .50) return candidate;
-        }
-        return Candidates.NoWinner.GetHashCode();
-    }
     private int[] GetVotesByRank(IReadOnlyList<IRankedBallot> Ballots, int rank)
     {
         return Ballots
@@ -105,11 +75,5 @@ public class RankedChoiceFancyCountingStrategy : IBallotCountingStrategy<IRanked
                 .Select(v => v.Candidate.GetHashCode()).ToArray();
 
     }
-    private void Count(Dictionary<int, int> counter, int[] votes)
-    {
-        for (int i = 0; i < votes.Length; i++)
-        {
-            counter[votes[i]] += 1;
-        }
-    }
+
 }

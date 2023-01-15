@@ -5,6 +5,10 @@ using Elections.Elections;
 using System.Diagnostics;
 using System.Reflection;
 using Elections.Strategies;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Elections.tests")]
+
 
 const int numVoters = 100_000;
 var voters = Voters.Create(numVoters, Candidates.Official);
