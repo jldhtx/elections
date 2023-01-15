@@ -12,16 +12,24 @@ RunSimpleElection(voters);
 
 RunRankedChoiceElection(voters);
 
+RunSimpleElectionCoinFlip(voters);
+
 static void RunSimpleElection(IReadOnlyList<IVoter> voters)
 {
     var ballots = SingleVoteBallotFactory.Create(voters, Candidates.Official);
-    // RunElection<PluralityElection, ISingleVoteBallot>(ballots);
+    RunElection<PluralityElection, PluralityVoteCountingStrategy, ISingleVoteBallot>(ballots);
+}
+
+static void RunSimpleElectionCoinFlip(IReadOnlyList<IVoter> voters)
+{
+    var ballots = SingleVoteBallotFactory.Create(voters, Candidates.Official);
+    RunElection<PluralityElection, PluralityVoteCountingStrategyFlipACoinTieBreaker, ISingleVoteBallot>(ballots);
 }
 
 static void RunRankedChoiceElection(IReadOnlyList<IVoter> voters)
 {
     var ballots = RankedBallotFactory.Create(voters, Candidates.Official);
-    // RunElection<RankedChoiceElection, IRankedBallot>(ballots);
+    RunElection<RankedChoiceElection, RankedChoiceCountingStrategy, IRankedBallot>(ballots);
 }
 
 static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ballots)
@@ -36,6 +44,8 @@ static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ba
     try
     {
         var election = new TElection();
+        var strategy = new TStrategy();
+        election.SetStrategy(strategy);
         var winner = election.Run(ballots, Candidates.Official);
 
         Console.WriteLine(FormatMessage($"Winner is {winner.Name}"));
