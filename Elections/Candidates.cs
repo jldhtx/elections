@@ -8,6 +8,7 @@ public static class Candidates
     private static readonly IReadOnlyList<ICandidate> _writeIns = GetSupremeCourtJustices().ToList();
     public static readonly ICandidate NoWinner = new Candidate(0, "No Winner");
     public static readonly ICandidate NoVote = new Candidate(-43, "No Vote");
+    public static readonly ICandidate Empty = new Candidate(-61, "Empty");
 
     private const int _writeInFactor = 1337;
 

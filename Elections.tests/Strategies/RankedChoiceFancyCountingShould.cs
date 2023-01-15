@@ -16,7 +16,7 @@ public class RankedChoiceFancyCountingShould
     public void ReturnATieWithTwoCandidatesAndTwoVotes()
     {
         var faker = new Faker();
-        var strategy = new Elections.Strategies.RankedChoiceFancyCountingStrategy();
+        var strategy = new RankedChoiceFancyCountingStrategy();
         var candidates = faker.PickRandom(Candidates.Official, 2).ToArray();
         var A = candidates[0];
         var B = candidates[1];
