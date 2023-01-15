@@ -36,6 +36,7 @@ With more time I'd probably tweak the performance in the TryAgain and AdjustBall
 
 Update: Wrote the above, then decided to take write a little better performing strategy.
 
+Second strategy was to use a simple Dictionary of int,int to track the hash of a candidate and its count, remove the lowest each round, then count a new filtered version of the original ballots. The comparisons and iterations are on a list of ints for the votes and not reference types so there's some performance boost there.  Like all the strategies it keeps the collections immutable.  This one runs in sub-100ms like the other strategies for Plurality. 
 ---
 # Requirements
 In this solution you will find a base project dealing with Political Elections 
