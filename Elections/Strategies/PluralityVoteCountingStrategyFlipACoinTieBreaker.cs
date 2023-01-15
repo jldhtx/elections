@@ -1,6 +1,7 @@
 
 using Elections.Interfaces;
 
+namespace Elections.Strategies;
 public class PluralityVoteCountingStrategyFlipACoinTieBreaker : IBallotCountingStrategy<ISingleVoteBallot>
 {
     public ICandidate CountBallots(IReadOnlyList<ISingleVoteBallot> ballots)

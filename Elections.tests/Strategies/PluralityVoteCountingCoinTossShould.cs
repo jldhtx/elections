@@ -3,6 +3,7 @@ using Elections;
 using Elections.Ballots;
 using Elections.Elections;
 using Elections.Interfaces;
+using Elections.Strategies;
 using FluentAssertions;
 using Xunit.Abstractions;
 

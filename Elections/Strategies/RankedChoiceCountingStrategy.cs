@@ -4,12 +4,13 @@ using Elections.Interfaces;
 
 [assembly: InternalsVisibleTo("Elections.tests")]
 
+namespace Elections.Strategies;
+
 public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallot>
 {
     private record VotingRoundResult(ICandidate Candidate, int TotalVotes, double Percentage);
 
-    // Round `1 - count total, % for all votes
-    //
+
     public ICandidate CountBallots(IReadOnlyList<IRankedBallot> Ballots)
     {
         var results = GetRoundResults(Ballots);
@@ -55,8 +56,8 @@ public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallo
         var candidates = ballots.Where(b => b.Voter is ICandidate);
 
         return ballots
-                    .Where(b => b.Votes.First().Candidate == candidateWithLeastVotes)
-                    .Where(b => !(b.Votes.Count == 1)) // Eliminate politicaians :)
+                    .Where(b => b.Votes.Count > 1 &&
+                         b.Votes.First().Candidate == candidateWithLeastVotes)
                     .Select(v => Promote(v))
                     .Union(ballots
                             .Where(b => !b.Votes.First().Candidate.Equals(candidateWithLeastVotes))

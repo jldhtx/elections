@@ -15,22 +15,26 @@ counting algorithm a bit too closely.
 
 My next thought was to use a simple state machine to iterate the votes and count them one by one and  transition into different states depending on the votes / stage of the election. However with the votes and candidates this involved passing around too much state (too much state in my State!) and also feel it would lead to an overly complex state machine with a lot of conditionals.
 
-State machine would be better for an actual voting machine's internal programming :)
+State machine would be better for an actual voting machine's internal programming :) I went so far as to start diagramming one:
+![state-machine](./images/fsm.svg)
 
 ## Phase II - Strategy Pattern
 
-Ultimately this felt like a good place to implement a strategy.  The counting strategies can be tested independently and switched out easily in an election.  This let me test the error conditions of an election independently and not repeat them for each election/strategy. 
+Ultimately this felt like a good place to implement a strategy.  The counting strategies can be tested independently and switched out easily in an election rather than re-creating the entire election class to modify an algorithm slightly.  This also let me separate some of the validation done in the election from the algorithm.
 
 Update: I initially added the IBallotCountingStrategy as a requirement in the Run() method of election but found myself mocking it in tests that didn't use it (kind of a code smell) so I've implemented a default strategy for each election with a method on IElection to override it. 
 
-In Program.cs I added a new strategy that does a tie breaker with a random coin toss (though with 3+ candidates that is a strange looking coin.)
+In Program.cs I added a new strategy that does a tie breaker with a random coin toss (though with 3+ candidates that is a strange looking coin.) No requirement was listed for tie breaking scenarios so I either return NoWinner or toss a coin.
 
 ### Election Abstract class.
-Both election types now inherit from base Election with a generic for the Ballot type and Strategy type where Strategy is constrained as having to count the correct ballot type. 
+Both election types now inherit from base Election, which has generic parameters for Ballot and Strategy.  Strategy is constrained to a list of the right Ballot types.
 
-My main reason for this was that the validation for 1 or 0 count cases was repeated in both election classes and this seemed like a candidate for a base class.  Any shared validation or other concerns can now be put into both these classes if this was to be a long running project. 
+My main reason for this was not to repeat myself. I had the shared validation code in two classes and repeated test code and didn't like it. 
 
-Because no requirement was given for tie breaking, this also told me strategy might be a good design choice.  You could now implement various tie breaking scenarios in their own strategies without having to crack open the election classes, which satisfies Open/Closed principle.  
+### Performance ###
+With more time I'd probably tweak the performance in the TryAgain and AdjustBallots methods. Running the program on the command line, I can see the two plurality scenarios are < 100ms whereas the ranked choice is in the 700ms range.   Given n candidates, 100000 votes, and assuming no tie is found until the n-th iteration, it's doing n x 100000 x 3 iterations so O(n) complexity if my CS isn't rusty. 
+
+Update: Wrote the above, then decided to take write a little better performing strategy.
 
 ---
 # Requirements

@@ -1,6 +1,7 @@
 using Elections;
 using Elections.Interfaces;
 
+namespace Elections.Strategies;
 public class PluralityVoteCountingStrategy : IBallotCountingStrategy<ISingleVoteBallot>
 {
     public ICandidate CountBallots(IReadOnlyList<ISingleVoteBallot> ballots)

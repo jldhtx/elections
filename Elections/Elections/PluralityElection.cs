@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using Elections.Interfaces;
+using Elections.Strategies;
 
 namespace Elections.Elections;
 

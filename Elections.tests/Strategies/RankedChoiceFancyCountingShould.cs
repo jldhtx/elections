@@ -5,7 +5,7 @@ using Elections.Interfaces;
 using Elections.Strategies;
 using FluentAssertions;
 
-public class RankedChoiceCountingShould
+public class RankedChoiceFancyCountingShould
 {
     private record TestCandidate(int Id, string Name) : ICandidate;
     private record TestVoter(int Id, string Name) : IVoter;
@@ -16,7 +16,7 @@ public class RankedChoiceCountingShould
     public void ReturnATieWithTwoCandidatesAndTwoVotes()
     {
         var faker = new Faker();
-        var strategy = new RankedChoiceCountingStrategy();
+        var strategy = new Elections.Strategies.RankedChoiceFancyCountingStrategy();
         var candidates = faker.PickRandom(Candidates.Official, 2).ToArray();
         var A = candidates[0];
         var B = candidates[1];
@@ -42,7 +42,7 @@ public class RankedChoiceCountingShould
         // D - 75
         var faker = new Faker();
         var candidates = faker.PickRandom(Candidates.Official, 4).ToArray();
-        var strategy = new RankedChoiceCountingStrategy();
+        var strategy = new Elections.Strategies.RankedChoiceFancyCountingStrategy();
 
         var A = candidates[0];
         var B = candidates[1];
@@ -62,25 +62,6 @@ public class RankedChoiceCountingShould
         winner.Should().Be(A);
     }
 
-    [Fact]
-    public void AdjustBallotsCorrectly()
-    {
-
-        var faker = new Faker();
-        var candidates = faker.PickRandom(Candidates.Official, 2).ToArray();
-        var A = candidates[0];
-        var B = candidates[1];
-        var ballots = new List<IRankedBallot>();
-        ballots.AddRange(GenerateFakeBallotsForCandidates(faker, 200, new[] { A, B }));
-        ballots.AddRange(GenerateFakeBallotsForCandidates(faker, 100, new[] { B, A }));
-
-        var strategy = new RankedChoiceCountingStrategy();
-        var adjustedBallots = strategy.AdjustBallots(ballots, B);
-        adjustedBallots.Where(ballot => ballot.Votes.First().Candidate == A)
-            .Should().HaveCount(300);
-
-
-    }
     private List<IRankedBallot> GenerateFakeBallotsForCandidates(Faker f, int count, ICandidate[] candidates)
     {
         List<IRankedBallot> ballots = new List<IRankedBallot>();
