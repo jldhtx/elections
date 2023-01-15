@@ -11,25 +11,24 @@ The first step was to write tests for the Plurality Election trivial cases to sa
 - 1 candidate, 1 voter - Candidate wins
 - No Winner - I implemented this by returning a static instance of Candidate called NoWinner to check against (I prefer this to null checks.)
 
-The code to do this ended up being a simple linq statement but then I had to add checks for tie conditions and some other things inside the election.  This felt like coupling the election to the 
-counting algorithm a bit too closely. 
+The code to do this ended up being a simple linq statement, but it had cross-cutting concerns and some logic in the election class that wasn't necessary. This felt like coupling the election to some of the counting algorithm a bit too closely. 
 
-My next thought was to use a simple state machine to iterate the votes and count them one by one and  transition into different states depending on the votes / stage of the election. However with the votes and candidates this involved passing around too much state (too much state in my State!) and also feel it would lead to an overly complex state machine with a lot of conditionals and just not a good fit for this problem.
+My next thought was to use a simple state machine to iterate the votes and count them one by one and transition into different states depending on the votes / stage of the election. However with the votes and candidates this involved passing around too much state (too much state in my State!) and also feel it would lead to an overly complex state machine with a lot of conditionals and just not a good fit for this problem.
 
-State machine would be better for an actual voting machine's internal programming :) I went so far as to start diagramming one:
+State machine would be better for an actual voting machine's internal programming :) I went so far as to start diagramming one then after this diagram it started getting way too complex.
 ![state-machine](./images/fsm.svg)
 
 This would be for a simple plurality vote but it doesn't account for the invalid states. Once you add the ranked choices it became more complex where processing votes has multiple states.
 
 ## Phase II - Strategy Pattern
 
-Ultimately this felt like a good place to implement a strategy.  The counting strategies can be tested independently and switched out easily in an election rather than re-creating the entire election class to modify an algorithm slightly.  This also let me separate some of the validation done in the election from the algorithm.
+After some more musing this felt like a good place to implement a strategy.  The counting strategies can be tested independently and switched out easily in an election rather than re-creating the entire election class to modify an algorithm slightly.  This also let me separate some of the validation done in the election from the algorithm.
 
-Another perk would be able to use DI to implement a new strategy with minimal code or config change.
+Another perk would be able to use DI to implement a new strategy with minimal code or config change or even having run time selection made. 
 
 Update: I initially added the IBallotCountingStrategy as a requirement in the Run() method of election but found myself mocking it in tests that didn't use it (kind of a code smell) so I've implemented a default strategy for each election with a method SetStrategy on IElection to override it. 
 
-In Program.cs I added a new strategy that does a tie breaker with a random coin toss (though with 3+ candidates that is a strange looking coin.) No requirement was listed for tie breaking scenarios so I either return NoWinner or toss a coin.
+In Program.cs I added a new strategy that does a tie breaker with a random coin toss (though with 3+ candidates that is a strange looking coin.) No requirement was listed for tie breaking scenarios so I either return NoWinner or toss a coin in the two different implementations.
 
 ### Election Abstract class.
 Both election types now inherit from base Election, which has generic parameters for Ballot and Strategy.  Strategy is constrained to a list of the right Ballot types.
@@ -46,6 +45,11 @@ Second strategy was to use a simple Dictionary of int,int to track the hash of a
 Also went back and refactored original implementation some as it returend ties occasionally when it should not. Modified the algorithm a little to perform better, but still not as good as second strategy.
 
 Refactored the dictionary used for counting into its own class named VoteCounter<T> so the counting/lowest/highest etc is isolated and tested separately. 
+
+### Further notes 
+
+- Some of the higher performing strategy codes mutates collections more than I'd like but iteratively refining the list of votes to count was part of the speed-up so I left it.  With more time I'd likely update that a bit cleaner.
+- Flattening out the ranked ballots into a 2d array of voteCount x candidate count may be a way to boost performance too, but alas I didn't want to spend any more time.   Dealing purely with value types then translating it back to the objects later would take advantage of the stack. 
 
 ---
 # Requirements
