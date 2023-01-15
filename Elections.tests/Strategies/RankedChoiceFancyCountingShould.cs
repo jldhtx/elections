@@ -86,7 +86,7 @@ public class RankedChoiceFancyCountingShould
         var voters = Voters.Create(numVoters, Candidates.Official);
         var ballots = RankedBallotFactory.Create(voters, Candidates.Official);
 
-        var strategy = new RankedChoiceCountingStrategy();
+        var strategy = new RankedChoiceFancyCountingStrategy();
         var winner = strategy.CountBallots(ballots);
     }
 }

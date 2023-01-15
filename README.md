@@ -45,6 +45,8 @@ Second strategy was to use a simple Dictionary of int,int to track the hash of a
 
 Also went back and refactored original implementation some as it returend ties occasionally when it should not. Modified the algorithm a little to perform better, but still not as good as second strategy.
 
+Refactored the dictionary used for counting into its own class named VoteCounter<T> so the counting/lowest/highest etc is isolated and tested separately. 
+
 ---
 # Requirements
 In this solution you will find a base project dealing with Political Elections 

@@ -2,15 +2,13 @@ using System.Runtime.CompilerServices;
 using System.Collections;
 using Elections;
 using Elections.Interfaces;
-using Elections.Ballots;
+
 
 [assembly: InternalsVisibleTo("Elections.tests")]
 
 namespace Elections.Strategies;
 public class RankedChoiceFancyCountingStrategy : IBallotCountingStrategy<IRankedBallot>
 {
-    private record VoterRecord(int VoterId, IRankedVote Vote, IEnumerable<IRankedVote> Votes);
-
     private IEnumerable<ICandidate> GetDistinctCandidates(
             IReadOnlyList<IRankedBallot> ballots)
     {
@@ -18,84 +16,100 @@ public class RankedChoiceFancyCountingStrategy : IBallotCountingStrategy<IRanked
                     .Select(v => v.Candidate).Distinct(); ;
     }
 
-
     public ICandidate CountBallots(IReadOnlyList<IRankedBallot> Ballots)
     {
         // Initialize an empty dictionary of the 
         // candidates in the ifeld. 
         var candidates = GetDistinctCandidates(Ballots);
         var voteCounter = new VoteCounter<int>(candidates.Select(c => c.GetHashCode()));
-        var votesToCount = Ballots // Get rank 1 votes
-            .Select(b => new VoterRecord(b.Voter.Id, b.Votes.First(v => v.Rank == 1), b.Votes))
-            .ToArray();
-        var winner = CountVotes(candidates, votesToCount, voteCounter);
+        var winner = CountRanks(Ballots, voteCounter);
         return GetCandidateByHashCode(winner, candidates);
     }
 
     private ICandidate GetCandidateByHashCode(int hash, IEnumerable<ICandidate> candidates)
     {
-        if (hash == Candidates.NoWinner.GetHashCode()) return Candidates.NoWinner;
+        if (hash == Candidates.NoWinner.GetHashCode())
+            return Candidates.NoWinner;
         return candidates.First(c => c.GetHashCode() == hash);
     }
 
-    private int CountVotes(IEnumerable<ICandidate> candidates,
-    VoterRecord[] votesToCount,
+    private int CountRanks(IReadOnlyList<IRankedBallot> ballots,
     VoteCounter<int> voteCounter)
     {
-        for (int rank = 1; rank <= candidates.Count(); rank++)
+        var rank = 1;
+        int candidateCount = voteCounter.KeyCount();
+        var noWinner = Candidates.NoWinner.GetHashCode();
+        while (rank <= candidateCount)
         {
-            var winner = GetWinnerForRank(candidates, voteCounter, votesToCount, rank);
-            if (voteCounter.IsTied()) // All vote counts the same. No lowest to drop
-                return Candidates.NoWinner.GetHashCode();
-            if (winner != Candidates.NoWinner.GetHashCode())
-                return winner;
+            voteCounter.CountItems(GetVotesByRank(ballots, rank));
+            if (voteCounter.IsTied())
+                return noWinner;
+            var highesTVotes = voteCounter.GetHighest();
+            if (highesTVotes.Percentage > 0.50) return highesTVotes.Item;
+            var lowest = voteCounter.LowestVotes();
+            voteCounter.Remove(lowest);
+            rank++;
+            ballots = AdjustBallots(ballots, rank, lowest);
+        }
+
+        return noWinner;
+    }
+
+    private IReadOnlyList<IRankedBallot> AdjustBallots(IReadOnlyList<IRankedBallot> ballots, int rank, int lowest)
+    {
+        // Get the votes at Rank-1 that voted for the lowest ranked candidate
+        // Then retrieve their next item
+        var offset = rank - 1;
+        return ballots
+                .Where(b => b.Votes.Any(v => v.Rank == offset
+                        && v.Candidate.GetHashCode() == lowest))
+                        .ToList();
+
+    }
+    private int GetCandidateWithLeastVotes(Dictionary<int, int> voteCounter)
+    {
+        var lowest = voteCounter.Keys.First();
+
+        foreach (var candidate in voteCounter.Keys)
+        {
+            if (voteCounter[candidate] < voteCounter[lowest])
+            {
+                lowest = candidate;
+            }
+        }
+        return lowest;
+    }
+    private void DropLowest(Dictionary<int, int> voteCounter,
+    int lowest)
+    {
+        voteCounter.Remove(lowest);
+    }
+
+
+
+
+    private int GetWinner(Dictionary<int, int> counter, int voteCount)
+    {
+        foreach (var candidate in counter.Keys)
+        {
+            double percentageOfVote = counter[candidate] / (double)voteCount;
+            if (percentageOfVote >= .50) return candidate;
         }
         return Candidates.NoWinner.GetHashCode();
     }
-
-
-    private int GetWinnerForRank(IEnumerable<ICandidate> candidates,
-    VoteCounter<int> voteCounter, VoterRecord[] votesToCount, int rank)
+    private int[] GetVotesByRank(IReadOnlyList<IRankedBallot> Ballots, int rank)
     {
-        votesToCount = NextRank(votesToCount, voteCounter, rank);
-        voteCounter.CountItems(votesToCount.Select(v => v.Vote.Candidate.GetHashCode()));
-        var highest = voteCounter.GetHighest();
-        if (highest.Percentage > 0.50)
-            return highest.Item;
-        return Candidates.NoWinner.GetHashCode();
-    }
+        return Ballots
+                .Select(b => b.Votes.FirstOrDefault(v => v.Rank == rank))
+                .Where(v => v != null)
+                .Select(v => v.Candidate.GetHashCode()).ToArray();
 
-    private VoterRecord[] NextRank(VoterRecord[] votes, VoteCounter<int> counter, int rank)
+    }
+    private void Count(Dictionary<int, int> counter, int[] votes)
     {
-        if (rank == 1) return votes; // Don't need to filter out with no previous round
-        var lowestCandidate = counter.LowestVotes();
-        var votesForLowest = GetLowestCandidateVotes(votes, lowestCandidate);
-        counter.Remove(lowestCandidate);
-        return GetNextRankForVoters(votesForLowest, rank);
+        for (int i = 0; i < votes.Length; i++)
+        {
+            counter[votes[i]] += 1;
+        }
     }
-
-    private VoterRecord[] GetNextRankForVoters(VoterRecord[] previous, int rank)
-    {
-        return previous
-            .Select(v => new VoterRecord(v.VoterId, GetVoteForRank(rank, v), v.Votes))
-            .Where(v => !v.Vote.Candidate.Equals(Candidates.NoVote))
-            .ToArray();
-    }
-
-
-    private IRankedVote GetVoteForRank(int rank, VoterRecord v)
-    {
-        var nextVotes = v.Votes
-            .OrderBy(v => v.Rank)
-            .Skip(rank - 1);
-        if (nextVotes.Any())
-            return nextVotes.First();
-        return RankedBallotFactory.NoVote();
-    }
-
-    private VoterRecord[] GetLowestCandidateVotes(VoterRecord[] current, int lowest)
-    {
-        return current.Where(c => c.Vote.Candidate.GetHashCode().Equals(lowest)).ToArray();
-    }
-
 }
