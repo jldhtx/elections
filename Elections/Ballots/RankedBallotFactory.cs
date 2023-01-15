@@ -4,6 +4,11 @@ namespace Elections.Ballots;
 
 public static class RankedBallotFactory
 {
+
+    public static IRankedVote NoVote()
+    {
+        return new RankedChoiceVote(Candidates.NoVote, 0);
+    }
     public static IReadOnlyList<IRankedBallot> Create(IReadOnlyList<IVoter> voters, IReadOnlyList<ICandidate> candidates)
     {
         return voters.Select(x => CreateBallot(x, candidates)).ToList();

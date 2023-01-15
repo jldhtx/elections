@@ -63,7 +63,7 @@ public class RankedChoiceCountingShould
     }
 
     [Fact]
-    public void AdjustBallotsCorrectly()
+    public void AdjustsVotesCorrectly()
     {
 
         var faker = new Faker();
@@ -75,8 +75,8 @@ public class RankedChoiceCountingShould
         ballots.AddRange(GenerateFakeBallotsForCandidates(faker, 100, new[] { B, A }));
 
         var strategy = new RankedChoiceCountingStrategy();
-        var adjustedBallots = strategy.AdjustBallots(ballots, B);
-        adjustedBallots.Where(ballot => ballot.Votes.First().Candidate == A)
+        var adjustedBallots = strategy.AdjustVotes(ballots, B, 2);
+        adjustedBallots.Where(vote => vote.Candidate.Equals(A))
             .Should().HaveCount(300);
 
 
@@ -107,5 +107,6 @@ public class RankedChoiceCountingShould
 
         var strategy = new RankedChoiceCountingStrategy();
         var winner = strategy.CountBallots(ballots);
+        winner.Should().NotBe(Candidates.NoWinner);
     }
 }

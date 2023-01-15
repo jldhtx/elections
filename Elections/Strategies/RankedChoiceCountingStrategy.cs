@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Elections;
+using Elections.Ballots;
 using Elections.Interfaces;
 
 [assembly: InternalsVisibleTo("Elections.tests")]
@@ -13,10 +14,13 @@ public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallo
 
     public ICandidate CountBallots(IReadOnlyList<IRankedBallot> Ballots)
     {
-        var results = GetRoundResults(Ballots);
+        var candidateCount = Ballots
+                      .SelectMany(b => b.Votes).Select(b => b.Candidate)
+                     .Distinct().Count();
+
+        var votesToCount = Ballots.Select(b => b.Votes.First());
+        var results = GetRoundResults(votesToCount.ToList());
         var winner = MajorityWinner(results);
-        var candidateCount = Ballots.SelectMany(b => b.Votes).Select(b => b.Candidate)
-                       .Distinct().Count();
 
         if (IsATie(results))
             return Candidates.NoWinner;
@@ -29,15 +33,15 @@ public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallo
     private ICandidate TryAgain(IReadOnlyList<IRankedBallot> Ballots, int candidateCount,
     ICandidate candidateWithLeastVotes)
     {
-        int round = 1;
+        int rank = 1;
         var winner = Candidates.NoWinner;
-        while (winner.Equals(Candidates.NoWinner) && round <= candidateCount)
+        while (winner.Equals(Candidates.NoWinner) && rank <= candidateCount)
         {
-            var adjustedBallots = AdjustBallots(Ballots, candidateWithLeastVotes).ToList();
-            var results = GetRoundResults(adjustedBallots);
+            var adjustedVotes = AdjustVotes(Ballots, candidateWithLeastVotes, rank).ToList();
+            var results = GetRoundResults(adjustedVotes);
             candidateWithLeastVotes = results.Last().Candidate;
             winner = MajorityWinner(results);
-            round += 1;
+            rank += 1;
         }
 
         return winner;
@@ -50,20 +54,36 @@ public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallo
                         .First().Count() == count);
 
     }
-    internal IEnumerable<IRankedBallot> AdjustBallots(IEnumerable<IRankedBallot> ballots,
-                ICandidate candidateWithLeastVotes)
+    internal IEnumerable<IRankedVote> AdjustVotes(IEnumerable<IRankedBallot> ballots,
+                ICandidate candidateWithLeastVotes, int rank)
     {
-        var candidates = ballots.Where(b => b.Voter is ICandidate);
+        var adjustedVotes = new List<IRankedVote>();
+        var votesMinusLowest = ballots
+            .Select(b => GetVote(rank - 1, b.Votes))
+            .Where(b => !b.Candidate.Equals(candidateWithLeastVotes)
+                    && !b.Equals(Candidates.NoVote));
 
-        return ballots
-                    .Where(b => b.Votes.Count > 1 &&
-                         b.Votes.First().Candidate == candidateWithLeastVotes)
-                    .Select(v => Promote(v))
-                    .Union(ballots
-                            .Where(b => !b.Votes.First().Candidate.Equals(candidateWithLeastVotes))
-                    );
+        var nextRankedVote = ballots
+            .Where(b => GetVote(rank - 1, b.Votes).Candidate
+                    == candidateWithLeastVotes)
+            .Select(b => GetVote(rank, b.Votes));
+
+        adjustedVotes.AddRange(votesMinusLowest);
+        adjustedVotes.AddRange(nextRankedVote);
+
+        return adjustedVotes;
+
     }
 
+    private IRankedVote GetVote(int rank, IReadOnlyList<IRankedVote> votes)
+    {
+        var nextVotes = votes.Skip(rank - 1);
+        if (nextVotes.Any())
+            return nextVotes.First();
+        return RankedBallotFactory.NoVote();
+
+
+    }
     private IRankedBallot Promote(IRankedBallot ballot)
     {
         var newVotes = ballot.Votes.Skip(1);
@@ -71,10 +91,10 @@ public class RankedChoiceCountingStrategy : IBallotCountingStrategy<IRankedBallo
     }
     private record PromotedRankedBallot(IReadOnlyList<IRankedVote> Votes, IVoter Voter) : IRankedBallot;
 
-    private IEnumerable<VotingRoundResult> GetRoundResults(IReadOnlyList<IRankedBallot> ballots)
+    private IEnumerable<VotingRoundResult> GetRoundResults(IReadOnlyList<IRankedVote> votes)
     {
-        return ballots.GroupBy(b => b.Votes.First().Candidate)
-             .Select(g => new VotingRoundResult(g.Key, g.Count(), (double)g.Count() / ballots.Count))
+        return votes.GroupBy(b => b.Candidate)
+             .Select(g => new VotingRoundResult(g.Key, g.Count(), (double)g.Count() / votes.Count))
              .OrderByDescending(v => v.Percentage).ToList();
     }
 

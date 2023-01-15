@@ -25,6 +25,8 @@ This would be for a simple plurality vote but it doesn't account for the invalid
 
 Ultimately this felt like a good place to implement a strategy.  The counting strategies can be tested independently and switched out easily in an election rather than re-creating the entire election class to modify an algorithm slightly.  This also let me separate some of the validation done in the election from the algorithm.
 
+Another perk would be able to use DI to implement a new strategy with minimal code or config change.
+
 Update: I initially added the IBallotCountingStrategy as a requirement in the Run() method of election but found myself mocking it in tests that didn't use it (kind of a code smell) so I've implemented a default strategy for each election with a method SetStrategy on IElection to override it. 
 
 In Program.cs I added a new strategy that does a tie breaker with a random coin toss (though with 3+ candidates that is a strange looking coin.) No requirement was listed for tie breaking scenarios so I either return NoWinner or toss a coin.
@@ -40,6 +42,8 @@ With more time I'd probably tweak the performance in the TryAgain and AdjustBall
 Update: Wrote the above, then decided to take write a little better performing strategy.
 
 Second strategy was to use a simple Dictionary of int,int to track the hash of a candidate and its count, remove the lowest each round, then count a new filtered version of the original ballots. The comparisons and iterations are on a list of ints for the votes and not reference types so there's some performance boost there.  Like all the strategies it keeps the collections immutable.  This one runs in sub-100ms like the other strategies for Plurality. 
+
+Also went back and refactored original implementation some as it returend ties occasionally when it should not. 
 ---
 # Requirements
 In this solution you will find a base project dealing with Political Elections 

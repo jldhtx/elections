@@ -13,7 +13,7 @@ RunSimpleElection(voters);
 
 RunRankedChoiceElection(voters);
 
-RunSimpleElectionCoinFlip(voters)
+RunSimpleElectionCoinFlip(voters);
 
 RunFancyRankedChoiceElection(voters);
 
@@ -47,7 +47,8 @@ static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ba
     where TStrategy : IBallotCountingStrategy<TBallot>, new()
 {
     var stopwatch = Stopwatch.StartNew();
-    Console.WriteLine($"========== {typeof(TElection).Name} ==========");
+    var header = $"========== {typeof(TElection).Name} - {typeof(TStrategy).Name} ==========";
+    Console.WriteLine(header);
     Console.WriteLine();
 
     try
@@ -65,7 +66,7 @@ static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ba
     }
 
     Console.WriteLine();
-    Console.WriteLine($"============================================");
+    Console.WriteLine($"{new string('=', header.Length)}");
     Console.WriteLine();
     Console.WriteLine();
 
