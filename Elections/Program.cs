@@ -4,6 +4,7 @@ using Elections.Ballots;
 using Elections.Elections;
 using System.Diagnostics;
 using System.Reflection;
+using Elections.Strategies;
 
 const int numVoters = 100_000;
 var voters = Voters.Create(numVoters, Candidates.Official);
@@ -12,7 +13,9 @@ RunSimpleElection(voters);
 
 RunRankedChoiceElection(voters);
 
-RunSimpleElectionCoinFlip(voters);
+RunSimpleElectionCoinFlip(voters)
+
+RunFancyRankedChoiceElection(voters);
 
 static void RunSimpleElection(IReadOnlyList<IVoter> voters)
 {
@@ -30,6 +33,12 @@ static void RunRankedChoiceElection(IReadOnlyList<IVoter> voters)
 {
     var ballots = RankedBallotFactory.Create(voters, Candidates.Official);
     RunElection<RankedChoiceElection, RankedChoiceCountingStrategy, IRankedBallot>(ballots);
+}
+
+static void RunFancyRankedChoiceElection(IReadOnlyList<IVoter> voters)
+{
+    var ballots = RankedBallotFactory.Create(voters, Candidates.Official);
+    RunElection<RankedChoiceElection, RankedChoiceFancyCountingStrategy, IRankedBallot>(ballots);
 }
 
 static void RunElection<TElection, TStrategy, TBallot>(IReadOnlyList<TBallot> ballots)
