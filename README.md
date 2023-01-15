@@ -49,7 +49,7 @@ Refactored the dictionary used for counting into its own class named VoteCounter
 ### Code Coverage
 
 If you run the Election.tests/runCoverage.sh (on Mac over here) it'll generate a new coverage report.  I've included the latest run in the PR which you can view here (I wouldn't usually include artifacts in a repo but this is just for demo purposes :) )
-[coverage-report](./Elections.tests/coveragereport/index.html)
+[coverage-report](https://htmlpreview.github.io/?https://github.com/jldhtx/elections/blob/main/Elections.tests/coveragereport/index.html)
 ### Further notes 
 
 - Some of the higher performing strategy codes mutates collections more than I'd like but iteratively refining the list of votes to count was part of the speed-up so I left it.  With more time I'd likely update that a bit cleaner.
